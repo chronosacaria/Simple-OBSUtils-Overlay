@@ -6,7 +6,7 @@ So, as I said: this is a stylesheet that works with the FoundryVTT Module called
 
 ## Guide for New Readers (What this file does)
 Okay, so what does this stylesheet actually do? Well, let's take a look at a visual example, first.
-![Image of four character cards with the styling from this repository](img\card_examples.png)
+![Image of four character cards with the styling from this repository](https://github.com/chronosacaria/Simple-OBSUtils-Overlay/blob/main/img/card_examples.png?raw=true)
 ### Groundwork
 As we can see, there are a few elements that are provided with this stylesheet. Whilst we can jump right into the overlays, it is important to understand some of the `:root` contents of the stylesheet as these are the foundation upon which everything else is built. Let's look at them one by one:
 - Dimensions
