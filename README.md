@@ -21,8 +21,8 @@ As we can see, there are a few elements that are provided with this stylesheet. 
     - We have four variables that are provided here:
         - `--bar-height`: This variable is used as a unit of measurement that functions as a vertical "tick mark" across the bottom section of the card. This value is then used in other formulae throughout the stylesheet to allow for a more consistant and predictable height of elements as they are adjusted.
         - `--stack-height`: Much like the `--bar-height` variable, this is also used as a unit of measurement. However, in this case, it is specifc to the "floating pills" of the HP and AC (Overlay #3 and #4, respectively). It is used for the fine adjustment of both of these pills to make sure that they are at the same height.
-            > [!NOTE]
-            > It is important to note that with the `--stack-height` variable, there is a bit of a "gotcha". This is because there is a decorative border around those pills and a slight "tab" of the colour that extends below the pills to make them appear as a contiguous unit with the stats section. If the `--stack-height` is adjusted, it is important to note that the `--pill-extend` variable may also need to be adjusted so that there is no visible seam.
+> [!NOTE]
+> It is important to note that with the `--stack-height` variable, there is a bit of a "gotcha". This is because there is a decorative border around those pills and a slight "tab" of the colour that extends below the pills to make them appear as a contiguous unit with the stats section. If the `--stack-height` is adjusted, it is important to note that the `--pill-extend` variable may also need to be adjusted so that there is no visible seam.
         - `--inset-x`: This variable is used to control the space between the HP and AC pills that sit above the stats. The larger the value, the larger the gap. The smaller the value, the smaller the gap. As long as the `--pill-extend` variable is the right amount, it should not show any visible seams and should allow for a clean sliding to adjust for the space that may be needed.
         - `--nameplate-height`: This variable controls the height of the "wooden" namebar at the top of the card. It is important to note that it is connected to the height of the section that holds the character token. As such, there may be a need to make some slight tweaks elsewhere, depending on the size that you want the namebar to be.
 - Typography
@@ -46,8 +46,8 @@ As we can see, there are a few elements that are provided with this stylesheet. 
 ### Overlays
 - Overlay 1 - Character Name Information
     - This section contains the "wooden" backplate and the name of the character. In the example, above, it is using a different font from the rest of the card. This is achieved through the use of waht are called Psuedo-Elements. 
-        > [!NOTE]
-        > Throughout this stylesheet, anything in the `::before` psuedo-element is used for backgrounds, gradients and textures whereas anything in the `::after` psuedo-element is used for decorations to the element as well as borders.
+> [!NOTE]
+> Throughout this stylesheet, anything in the `::before` psuedo-element is used for backgrounds, gradients and textures whereas anything in the `::after` psuedo-element is used for decorations to the element as well as borders.
 - Overlay 2 - Token Image and Background
     - This section contains the character's token. 
 > [!NOTE]
