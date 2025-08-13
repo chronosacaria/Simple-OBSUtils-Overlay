@@ -50,5 +50,5 @@ As we can see, there are a few elements that are provided with this stylesheet. 
         > Throughout this stylesheet, anything in the `::before` psuedo-element is used for backgrounds, gradients and textures whereas anything in the `::after` psuedo-element is used for decorations to the element as well as borders.
 - Overlay 2 - Token Image and Background
     - This section contains the character's token. 
-        > [!NOTE]
-        > The amazing token art that has been used here is made by SolaceSky. You can find her commissions here: [Solace's Commissions Page]()
+> [!NOTE]
+> The amazing token art that has been used here is made by SolaceSky. You can find her commissions here: [Solace's Commissions Page]()
