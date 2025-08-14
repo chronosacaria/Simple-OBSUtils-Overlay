@@ -2,22 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap');
 
 /*─────────────────────────────────────────────────────────────────────────────
- Guide for new readers (what this file does)
-─────────────────────────────────────────────────────────────────────────────*/
-/*
-  • This stylesheet formats FoundryVTT OBSUtils overlays for each character “card”.
-  • Each card is `.actor` and contains rows called `.single-line-overlay` in order:
-      #1 Portrait, #2 Nameplate, #3 HP, #4 AC, #5 Race/Class,
-      #6 Physical (STR/DEX/CON), #7 Mental (INT/WIS/CHA)
-  • Rows are absolutely positioned so we can pin them precisely (left/right/top/bottom).
-  • Pseudo‑elements:
-      ::before  → backgrounds/gradients/wood textures (visual only, no layout)
-      ::after   → decorative frames/borders (visual only, no layout)
-  • z-index controls stacking: larger z-index draws on top (e.g., nameplate > HP/AC > portrait).
-  • Edit values in :root below to tweak sizes/colors without hunting numbers.
-*/
-
-/*─────────────────────────────────────────────────────────────────────────────
  :root — shared variables
 ─────────────────────────────────────────────────────────────────────────────*/
 :root{
@@ -29,13 +13,15 @@
   /* Colors */
   --card-bg: #a58e57;
 
-  /* Layout constants */
+  /* Layout Variables */
+  --cards-top: 10px;
   --bar-height: 28px;
   --stack-height: 26px;
   --inset-x: 8px;
   --nameplate-height: 38px;
   --initial-card-left-placement: 0px;
-  --card-placement-offset: 258px; 
+  --card-placement-offset: 258px;
+  --gradient-gap: 48px;
 
   /* Typography */
     /* Font Family Information */
@@ -56,45 +42,103 @@
     --mental-stats-font-color: var(--unified-font-color) !important;
 
   /* Nameplate (knotty wood) colors */
-  --name-wood-1: #9a6a3a !important;  /* base stripes */
-  --name-wood-2: #b37a41 !important;  /* secondary stripes */
-  --name-wood-3: #865c33 !important;  /* tertiary stripes */
+  --name-wood-1: #9a6a3a !important;
+  --name-wood-2: #b37a41 !important;
+  --name-wood-3: #865c33 !important;
 
   /* Wood borders */
-  --wood-dark: #6b4e2e !important; /* Used for the parts of the gradient of the border */
-  --wood-mid:  #8a653b !important; /* Used for the parts of the gradient of the border */
-  --wood-lite: #b48853 !important; /* Used for the parts of the gradient of the border */
-  --wood-thick: 3px !important;
+  --wood-dark: #6b4e2e !important;
+  --wood-mid:  #8a653b !important;
+  --wood-lite: #b48853 !important;
+  --wood-thickness: 3px !important;
 
-  /* Adjustables */
-  --phys-raise: 8px !important;   /* how much Overlay #5 is raised above one bar */
-  --pill-extend: 8px !important;  /* extra gold “foot” below HP/AC pills to cover seams */
+  /* Pill Adjustments */
+  --pill-raise: 8px !important;
+  --pill-extend: 8px !important;
 
-  /* Gradient behind portrait */
-  --portrait-gradient-lower-left: #b6e1ff;
-  --portrait-gradient-upper-right: #f4f5f7;
+  /* Gradient Behind Portrait */
+  --desired-alpha-value: 1;
+  --gradient-lower-left: #b6e1ff;
+  --gradient-upper-right: #f4f5f7;
+
+  /* Boolean Values: 1 = YES; 0 = NO */
+  --is-token-visible: 1;
+  --is-token-background-offset: 0;
+
+  /* Helpers -- Please do not change these values */
+    /* Offset Helpers */
+    --token-background-offset-helper: calc(
+      var(--is-token-background-offset) * (
+        var(--card-height) - var(--nameplate-height) - (
+            var(--bar-height) * 2
+        )
+      )
+    );
+    --offset-alpha-when-offset-helper: calc(
+      (1 - var(--is-token-background-offset)) 
+      + (var(--is-token-background-offset) 
+      * var(--desired-alpha-value))
+    );
+    --portrait-alpha-when-offset-helper: calc(
+      ((1 - var(--is-token-background-offset)) 
+      + (var(--is-token-background-offset) 
+      * var(--desired-alpha-value)) * -1)
+    );
+
+    /* Gradient Helpers */
+    --portrait-gradient-lower-left: rgba(from var(--gradient-lower-left) r g b / var(--portrait-alpha-when-offset-helper));
+    --portrait-gradient-upper-right: rgba(from var(--gradient-upper-right) r g b / var(--portrait-alpha-when-offset-helper));
+    --offset-gradient-lower-left: rgba(from var(--gradient-lower-left) r g b / var(--offset-alpha-when-offset-helper));
+    --offset-gradient-upper-right: rgba(from var(--gradient-upper-right) r g b / var(--offset-alpha-when-offset-helper));    
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
  1) BASE STYLES: BODY & CARD CONTAINER
 ─────────────────────────────────────────────────────────────────────────────*/
 body {
-  background-color: rgba(0, 0, 0, 0);  /* Transparent so only cards show */
+  background-color: rgba(0, 0, 0, 0);
   margin: 0 auto;
-  overflow: hidden;                    /* Hide scrollbars in OBS */
+  overflow: hidden;
+  position: relative;
+}
+
+body::before{
+  content: "";
+  position: fixed;
+  left: calc(var(--is-token-background-offset) * 340px);
+  right: 0;
+  top: 0;
+  height: calc(
+    var(--is-token-background-offset) * 
+    var(--token-background-offset-helper)
+  );
+  width: var(--card-width);
+  transform: translateY(
+    calc(var(--is-token-background-offset) *
+      calc(
+        var(--cards-top) 
+        + var(--card-height) 
+        + var(--gradient-gap)
+      )
+    )
+  );
+  background: linear-gradient(
+    to top right,
+    var(--offset-gradient-lower-left),
+    var(--offset-gradient-upper-right)
+  );
+  pointer-events: none;
 }
 
 .actor {
-  position: absolute;                  /* Side-by-side placement */
-  width: var(--card-width) !important;     /* Card width */
-  height: var(--card-height) !important;    /* Card height */
-  background-color: var(--card-bg) !important; /* Gold background */
-  border-radius: var(--radius-card) !important; /* Rounded corners */
-  overflow: hidden !important;         /* Clip child overlays */
-  box-sizing: border-box;              /* Include padding/borders */
+  position: absolute;
+  width: var(--card-width) !important;
+  height: var(--card-height) !important;
+  border-radius: var(--radius-card) !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
 }
 
-/* Horizontal placement for each card */
 .actor:nth-child(1) { left: var(--initial-card-left-placement);}
 .actor:nth-child(2) { left: calc(var(--initial-card-left-placement) + var(--card-placement-offset));}
 .actor:nth-child(3) { left: calc(var(--initial-card-left-placement) + (var(--card-placement-offset) * 2));}
@@ -105,28 +149,28 @@ body {
  2) OVERLAY RESET
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay {
-  margin: 0 !important;    /* Remove default margins */
-  width: auto !important;  /* We size each overlay below */
+  margin: 0 !important;
+  width: auto !important;
   box-sizing: border-box;
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
- 4) OVERLAY #1 — CHARACTER NAME (knotty wood plaque, engraved text)
+ 4) OVERLAY #1 — CHARACTER NAME (knotty wood plaque, "engraved" text)
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(1) {
   position: absolute !important;
   margin: auto;
-  top: 0 !important;                    /* Pin to very top of card */
+  top: 0 !important;
   width: 100% !important;
   display: flex !important;
   justify-content: center;
   align-items: center !important;
   gap: 4px !important;
   padding: 4px 6px !important;
-  background-color: transparent !important; /* wood is on ::before */
-  z-index: 5 !important;                 /* Above everything else */
-  isolation: isolate;                     /* keep ::before behind text */
+  background-color: transparent !important;
+  isolation: isolate;
 }
+
 .actor .single-line-overlay:nth-child(1)::before{
   content:"";
   position:absolute;
@@ -146,12 +190,11 @@ body {
       var(--name-wood-2) 8px 16px,
       var(--name-wood-3) 16px 24px);
   background-blend-mode: overlay, multiply, multiply, multiply, normal;
-  /* inset edges to sell the plank */
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25);
   pointer-events:none;
-  z-index:0;
 }
-/* Engraved text styling */
+
+/* "Engraved" text styling */
 .actor .single-line-overlay:nth-child(1),
 .actor .single-line-overlay:nth-child(1) .component{
   font-family: var(--nameplate-font-family) !important;
@@ -160,9 +203,8 @@ body {
   color: var(--nameplate-font-color) !important;
   letter-spacing: .3px;
   position: relative;
-  z-index: 1;
   text-shadow: -1px -1px 0 rgba(0,0,0,.45), 1px 1px 0 rgba(255,255,255,.35);
-  -webkit-text-stroke: 2px rgba(0,0,0,.28); /* Outline around light text to keep it readable on wood */
+  -webkit-text-stroke: 2px rgba(0,0,0,.28);
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
@@ -170,43 +212,27 @@ body {
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(2) {
   position: absolute !important;
-  top: var(--nameplate-height) !important;    /* Portrait sits directly under the nameplate. If you change the nameplate height, this keeps the portrait aligned. */
+  top: var(--nameplate-height) !important;
   left: 0; right: 0;
-  bottom: calc(var(--bar-height) * 2) !important; /* Leave space for two bottom rows (#6 and #7). Using bar-height so this scales with your rows. */
+  bottom: calc(var(--bar-height) * 2) !important;
   background-size: cover !important;
   background-position: center !important;
-  border-radius: var(--radius-card) var(--radius-card) 0 0 !important; /* top corners */
-  z-index: 1 !important;               /* Behind stats & bars */
+  background: linear-gradient(
+    to top right,
+    var(--portrait-gradient-lower-left),
+    var(--portrait-gradient-upper-right)
+  );
+  opacity: calc(var(--is-token-visible));
   padding: 0 !important;
 }
-/* Remove/override any old gradient on overlay #1 */
-.actor .single-line-overlay:nth-child(2)::before { content: none !important; }
-
-/* Card gradient sized to portrait region */
-.actor::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0;
-  top: var(--bar-height);                   /* Start gradient one bar below the card top; visually matches the nameplate height so the gradient doesn't peek above it. */
-  bottom: calc(var(--bar-height) * 2);      /* stops above the bottom rows */
-  background: linear-gradient(to top right, var(--portrait-gradient-lower-left) 0%, var(--portrait-gradient-upper-right) 100%);
-  border-radius: var(--radius-card) var(--radius-card) 0 0;  /* match card's top corners */
-  pointer-events: none;
-  z-index: 0;                          /* behind overlays, above card bg */
-}
-
-/* Ensure the portrait paints above the gradient */
-.actor .single-line-overlay:nth-child(2) { z-index: 1 !important; }
-
-
 
 /*─────────────────────────────────────────────────────────────────────────────
- 5) OVERLAY #3 — HIT POINTS (pill, with optional foot; wood frame on 3 sides)
+ 5) OVERLAY #3 — HIT POINTS (pill, with foot; wood frame on 3 sides)
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(3) {
   position: absolute !important;
-  bottom: calc(var(--stack-height) * 3) !important; /* Position this pill three stacked-rows above the bottom so it lines up above rows #6 and #7 plus the race/class row. */
-  left: var(--inset-x) !important;     /* Align left */
+  bottom: calc(var(--stack-height) * 3) !important;
+  left: var(--inset-x) !important;
   display: flex !important;
   flex-direction: row !important; 
   align-items: center !important;
@@ -215,12 +241,11 @@ body {
   background-color: var(--card-bg) !important;
   font-size: var(--pill-text-size) !important;
   color: var(--hp-font-color);
-  border-radius: 6px, 0px, 0px, 6px !important; /* Keeping original comma-separated syntax to match your source. Note: commas are not required in CSS for border-radius; most browsers ignore them. */
+  border-radius: 6px 6px 0px 0px !important;
   width: max-content !important;
   white-space: nowrap !important;
-  z-index: 4 !important;                /* Above portrait */
 }
-/* extend the gold bg below the pill (optional foot) */
+
 .actor .single-line-overlay:nth-child(3)::before{
   content: "";
   position: absolute;
@@ -229,8 +254,8 @@ body {
   height: var(--pill-extend);
   background: var(--card-bg);
   pointer-events: none;
-  z-index: 0;
 }
+
 .actor .single-line-overlay:nth-child(3) .component {
   display: flex !important;
   align-items: center !important;
@@ -238,20 +263,19 @@ body {
   padding: 0 !important;
   white-space: nowrap !important;
 }
-/* wood frame (left/top/right only) */
+
 .actor .single-line-overlay:nth-child(3)::after{
   content:"";
   position:absolute;
-  top:  calc(-1 * var(--wood-thick));
-  left: calc(-1 * var(--wood-thick));
-  right:calc(-1 * var(--wood-thick));
-  bottom:calc(-1 * var(--wood-thick));
+  top:  calc(-1 * var(--wood-thickness));
+  left: calc(-1 * var(--wood-thickness));
+  right:calc(-1 * var(--wood-thickness));
+  bottom:calc(-1 * var(--wood-thickness));
   border-style: solid;
-  border-width: var(--wood-thick) var(--wood-thick) 0 var(--wood-thick);
+  border-width: var(--wood-thickness) var(--wood-thickness) 0 var(--wood-thickness);
   border-color: var(--wood-mid);
   border-radius: 8px 8px 0 0;
   pointer-events:none;
-  z-index: 1;
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
@@ -259,8 +283,8 @@ body {
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(4) {
   position: absolute !important;
-  bottom: calc(var(--stack-height) * 3) !important; /* Position this pill three stacked-rows above the bottom so it lines up above rows #6 and #7 plus the race/class row. */
-  right: var(--inset-x) !important;    /* Align right */
+  bottom: calc(var(--stack-height) * 3) !important;
+  right: var(--inset-x) !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -269,13 +293,12 @@ body {
   background-color: var(--card-bg) !important;
   font-size: var(--pill-text-size) !important;
   color: var(--ac-font-color);
-  border-radius: 6px, 0px, 0px, 6px !important; /* Keeping original comma-separated syntax to match your source. Note: commas are not required in CSS for border-radius; most browsers ignore them. */
+  border-radius: 6px 6px 0px 0px  !important;
   width: max-content !important;
   white-space: nowrap !important;
-  overflow: visible !important;        /* let the foot render outside */
-  z-index: 5 !important;
+  overflow: visible !important;
 }
-/* extend the gold bg below the pill without changing the wood border */
+
 .actor .single-line-overlay:nth-child(4)::before{
   content: "";
   position: absolute;
@@ -284,8 +307,8 @@ body {
   height: var(--pill-extend);
   background: var(--card-bg);
   pointer-events: none;
-  z-index: 0;
 }
+
 .actor .single-line-overlay:nth-child(4) .component {
   display: flex !important;
   align-items: center !important;
@@ -293,20 +316,19 @@ body {
   padding: 0 !important;
   white-space: nowrap !important;
 }
-/* wood frame (left/top/right only) */
+
 .actor .single-line-overlay:nth-child(4)::after{
   content:"";
   position:absolute;
-  top:  calc(-1 * var(--wood-thick));
-  left: calc(-1 * var(--wood-thick));
-  right:calc(-1 * var(--wood-thick));
-  bottom:calc(-1 * var(--wood-thick));
+  top:  calc(-1 * var(--wood-thickness));
+  left: calc(-1 * var(--wood-thickness));
+  right:calc(-1 * var(--wood-thickness));
+  bottom:calc(-1 * var(--wood-thickness));
   border-style: solid;
-  border-width: var(--wood-thick) var(--wood-thick) 0 var(--wood-thick);
+  border-width: var(--wood-thickness) var(--wood-thickness) 0 var(--wood-thickness);
   border-color: var(--wood-mid);
   border-radius: 8px 8px 0 0;
   pointer-events:none;
-  z-index: 1;
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
@@ -314,34 +336,34 @@ body {
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(5) {
   position: absolute !important;
-  bottom: calc(var(--bar-height) + var(--phys-raise)) !important; /* One standard bar up from the bottom, plus a small extra raise to cover the portrait gradient seam and clear wood cap. */
+  bottom: calc(var(--bar-height) + var(--pill-raise)) !important;
   left: 0 !important;
   width: 100% !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   padding: 4px 6px !important;
-  background-color: var(--card-bg) !important; /* cover gradient */
+  background-color: var(--card-bg) !important;
   font-size: var(--stat-text-size);
   color: var(--physical-stats-font-color);
   box-sizing: border-box;
-  z-index: 2 !important;
 }
+
 .actor .single-line-overlay:nth-child(5) .component { 
   white-space: nowrap !important; 
-  margin-right: 8px !important; }
-/* top wood cap outside the row */
+  margin-right: 8px !important; 
+}
+  
 .actor .single-line-overlay:nth-child(5)::after{
   content:"";
   position:absolute;
-  left: calc(-1 * var(--wood-thick));
-  right: calc(-1 * var(--wood-thick));
-  top: calc(-1 * var(--wood-thick));   /* sits just outside the box */
-  height: calc(var(--wood-thick) * 2); /* chunky top strip */
+  left: calc(-1 * var(--wood-thickness));
+  right: calc(-1 * var(--wood-thickness));
+  top: calc(-1 * var(--wood-thickness));
+  height: calc(var(--wood-thickness) * 2);
   background: linear-gradient(90deg, var(--wood-dark), var(--wood-mid) 40%, var(--wood-lite) 60%, var(--wood-dark));
   border-radius: 6px 6px 0 0;
   pointer-events:none;
-  z-index: 3; /* above row content */
 }
 
 /*─────────────────────────────────────────────────────────────────────────────
@@ -349,20 +371,22 @@ body {
 ─────────────────────────────────────────────────────────────────────────────*/
 .actor .single-line-overlay:nth-child(6) {
   position: absolute !important;
-  bottom: 0 !important;                /* Flush with bottom */
+  bottom: 0 !important;
   left: 0 !important;
   width: 100% !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   padding: 4px 6px !important;
-  background-color: transparent !important;
+  background-color: var(--card-bg) !important;
   font-size: var(--stat-text-size);
   color: var(--mental-stats-font-color);
   box-sizing: border-box;
-  z-index: 2 !important;
 }
-.actor .single-line-overlay:nth-child(6) .component { white-space: nowrap !important; margin-right: 8px !important; }
+.actor .single-line-overlay:nth-child(6) .component { 
+  white-space: nowrap !important;
+  margin-right: 8px !important; 
+}
 
 /*─────────────────────────────────────────────────────────────────────────────
  9) HIDE ANY EXTRA OVERLAYS
@@ -370,11 +394,34 @@ body {
 .actor .single-line-overlay:nth-child(n+8) { display: none !important; }
 
 /*─────────────────────────────────────────────────────────────────────────────
- 10) STACKING CONTEXT FIXES
-    - Push portrait behind all
-    - Pull name bar to very top
+ 10) STACKING CONTEXT
 ─────────────────────────────────────────────────────────────────────────────*/
+/* Nameplate */
 .actor .single-line-overlay:nth-child(1) { z-index: 9999 !important; }
-.actor .single-line-overlay:nth-child(2) { z-index: 0 !important; }
-.actor .single-line-overlay:nth-child(2) .component,
-.actor .single-line-overlay:nth-child(2) .component img { position: relative !important; z-index: 0 !important; }
+
+/* Token Portrait and Background Psuedo-elements */
+.actor .single-line-overlay:nth-child(1)::before,
+.actor .single-line-overlay:nth-child(2) .component, 
+.actor .single-line-overlay:nth-child(2) .component img,
+.actor .single-line-overlay:nth-child(3)::before,
+.actor .single-line-overlay:nth-child(4)::before { z-index: 0 !important; }
+
+/* Token Portrait and Foreground Psuedo-elements */
+.actor,
+.actor .single-line-overlay:nth-child(1), 
+.actor .single-line-overlay:nth-child(1) .component,
+.actor .single-line-overlay:nth-child(2),
+.actor .single-line-overlay:nth-child(3)::after,
+.actor .single-line-overlay:nth-child(4)::after,
+.actor .single-line-overlay:nth-child(5)::after { z-index: 1 !important;}
+
+/* Stat Block */
+.actor .single-line-overlay:nth-child(5),
+.actor .single-line-overlay:nth-child(6) { z-index: 2 !important; }
+
+/* HP and AC Pills */
+.actor .single-line-overlay:nth-child(3),
+.actor .single-line-overlay:nth-child(4) { z-index: 3 !important; }
+
+/* Exploded Gradient */
+body::before{ z-index: 5 !important; }
